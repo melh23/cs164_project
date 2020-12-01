@@ -60,6 +60,18 @@ Connect to remote server
 s.connect((remote_ip , port))
 print("Socket Connected to " + host + " on ip " + remote_ip)
 
+
+def recv(s):
+	while True:
+		try:
+			msg = s.recv(4096)
+			if msg:
+				print(msg.decode())
+				return stringToTuple(msg.decode())
+		except:
+			print("connection closed [recv]")
+			break
+
 '''
 TODO: Part-1.1, 1.2: 
 Enter Username and Passwd
@@ -94,26 +106,35 @@ if reply.decode() == 'valid': # TODO: use the correct string to replace xxx here
 	while True :
 
 		# TODO: Part-1.4: User should be provided with a menu. Complete the missing options in the menu!
-		message = input("Choose an option (type the number): \n 1. Logout \n 2. Post a message \n")
+		message = input("Choose an option (type the number): \n 1. Logout \n 2. Change Password \n 3. Post a message \n messages to get messages\n")
 		
 		try :
-			# TODO: Send the selected option to the server
-			# HINT: use sendto()/sendall()
+			if message == "messages":
+				s.recv(1024)
 			if message == str(1):
 				print("Logout")
-				# TODO: add logout operation
 				s.send("1".encode())
+				s.recv(1024)
+				break
 			if message == str(2):
-				print("Post a message")
+				print("change password")
 				s.send("2".encode())
-				response = ""
-				while not response:
-					response = s.recv(1024)
-				print("did we get a response?")
-				print(response)
-				msg = input(response.decode())
-				s.sendall(msg.encode())
+			if message == str(3):
+				print("Post a message")
+				s.send("3".encode())
 			# Add other operations, e.g. change password
+			while True:
+				prompt = recv(s)
+				if not prompt:
+					print("MessageError")
+					break
+				if prompt[1] == "break":
+					break
+				if prompt[0] == "True":
+					msg = input(prompt[1])
+					s.sendall(msg.encode())
+				else:
+					print(prompt[1])
 		except socket.error:
 			print("Send failed")
 			sys.exit()
