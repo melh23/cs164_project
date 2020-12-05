@@ -54,9 +54,22 @@ def recv(s):
 
 def send(s, data, response):
 	msg = response + "<>" + data
-	s.sendall(msg.encode())
-	time.sleep(0.5)
-	s.sendall(msg.encode())
+	s.setblocking(False)
+	while True:
+		s.sendall(msg.encode())
+		try:
+			ack = s.recv(1024)
+			if ack:
+				s.setblocking(True)
+				# break
+				return
+				ack = stringToTuple(ack)
+				if ack[0].decode() == "ACK" and ack[2].decode() == data:
+					print("ACK recieved")
+					s.setblocking(True)
+					return
+		except:
+			time.sleep(1)
 
 '''
 Define variables:
@@ -70,6 +83,11 @@ online = {}
 messages = []
 count = 0
 userpass = [[b'mel', b'pass'], [b'bob', b'pass']]
+
+groups = [b'room 1', b'room 2', b'room 3']
+participants = [[b'mel'], [], []]	# users in each chatroom
+
+
 
 '''
 Function for handling connections. This will be used to create threads
@@ -128,6 +146,8 @@ def clientThread(conn):
 				time.sleep(1)
 				send(conn, "break", "False")
 			elif option == str(3):
+				print("Get all messages")
+			elif option == str(4):
 				print("Post a message")
 				send(conn, "Which user do you want to send to? ", "True")
 				msg = recv(conn)
@@ -144,7 +164,63 @@ def clientThread(conn):
 				print(messages)
 				time.sleep(0.5)
 				send(conn, "break", "False")
-				print("Sent break")
+			elif option == str(5):
+				print("Broadcast")
+				send(conn, "What is your message to broadcast? ", "True")
+				msg = recv(conn)
+				print(msg)
+				time.sleep(0.5)
+				send(conn, "break", "False")
+				# broadcast
+			elif option == str(6):
+				print("Print groups")
+				grouplist = ""
+				for g in groups:
+					grouplist += g.decode()
+					if g != groups[-1]:
+						grouplist += ", "
+				send(conn, grouplist, "False")
+				# time.sleep(0.5)
+				send(conn, "break", "False")
+			elif option == str(7):
+				print("Join group")
+				send(conn, "Which group do you want to join? ", "True")
+				msg = recv(conn)
+				# join group
+				if msg.encode() not in groups:
+					print("invalid group name " + msg)
+					send(conn, "That is not a valid group", "False")
+					time.sleep(0.5)
+					send(conn, "break", "False")
+					break
+				room = groups.index(msg.encode())
+				participants[room].append(userpass[user][0])
+				print(participants)
+				time.sleep(0.5)
+				send(conn, "break", "False")
+			elif option == str(8):
+				print("Group message")
+				send(conn, "What group would you like to send to? ", "True")
+				group = recv(conn)
+				send(conn, "What message would you like to send? ", "True")
+				msg = recv(conn)
+				# send msgs
+			elif option == str(9):
+				print("Leave group")
+				send(conn, "What group do you want to leave? ", "True")
+				group = recv(conn)
+				# leave group
+				if group.encode() not in groups:
+					print("invalid group name " + msg)
+					send(conn, "That is not a valid group", "false")
+					#time.sleep(0.5)
+					send(conn, "break", "False")
+					break
+				room = groups.index(msg.encode())
+				participants[room].remove(userpass[user][0])
+				print(participants)
+				#time.sleep(0.5)
+				send(conn, "break", "False")
 			else:
 				try :
 					conn.sendall("Option not valid".encode())
