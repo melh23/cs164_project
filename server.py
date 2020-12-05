@@ -61,13 +61,7 @@ def send(s, data, response):
 			ack = s.recv(1024)
 			if ack:
 				s.setblocking(True)
-				# break
 				return
-				ack = stringToTuple(ack)
-				if ack[0].decode() == "ACK" and ack[2].decode() == data:
-					print("ACK recieved")
-					s.setblocking(True)
-					return
 		except:
 			time.sleep(1)
 
@@ -82,10 +76,10 @@ online = {}
 # e.g. userpass = [......]
 messages = []
 count = 0
-userpass = [[b'mel', b'pass'], [b'bob', b'pass']]
+userpass = [[b'mel', b'pass'], [b'alice', b'pass'], [b'bob', b'pass']]
 
 groups = [b'room 1', b'room 2', b'room 3']
-participants = [[b'mel'], [], []]	# users in each chatroom
+participants = [[b'mel'], [], [b'alice', b'bob']]	# users in each chatroom
 
 
 
@@ -137,41 +131,47 @@ def clientThread(conn):
 				if userpass[user][1].decode() != msg:
 					send(conn, "Invalid password. Aborting reset", "False")
 					break
-				time.sleep(0.5)
 				send(conn, "What is your new password? ", "True")
 				msg = recv(conn)
-				# update password
 				userpass[user][1] = msg.encode()
 				send(conn, "Password updted", "False")
-				time.sleep(1)
 				send(conn, "break", "False")
 			elif option == str(3):
 				print("Get all messages")
+				name = userpass[user][0].decode()
+				msglist = ""
+				for msg in messages:
+					if name == msg[0]:
+						msglist += msg[1]
+						msglist += "\n"
+						msg[0] = "rcvd"
+						# messages.remove([name, msg[1]])
+				send(conn, msglist, "False")
+				send(conn, "break", "False")
 			elif option == str(4):
 				print("Post a message")
 				send(conn, "Which user do you want to send to? ", "True")
-				msg = recv(conn)
-				print(msg)
-				if not online[msg]:
+				sendto = recv(conn)
+				if not online[sendto]:
 					send(conn, "User not available", "False")
 					print("user not in client list")
 					break
-				sendto = msg
 				send(conn, "What is your message? ", "True")
 				msg = recv(conn)
-				print(msg)
 				messages.append([sendto, msg])
 				print(messages)
-				time.sleep(0.5)
 				send(conn, "break", "False")
 			elif option == str(5):
 				print("Broadcast")
 				send(conn, "What is your message to broadcast? ", "True")
 				msg = recv(conn)
 				print(msg)
-				time.sleep(0.5)
 				send(conn, "break", "False")
 				# broadcast
+				for people in online:
+					messages.append([people, msg])
+				print(messages)
+				send(conn, "break", "False")
 			elif option == str(6):
 				print("Print groups")
 				grouplist = ""
@@ -180,23 +180,19 @@ def clientThread(conn):
 					if g != groups[-1]:
 						grouplist += ", "
 				send(conn, grouplist, "False")
-				# time.sleep(0.5)
 				send(conn, "break", "False")
 			elif option == str(7):
 				print("Join group")
 				send(conn, "Which group do you want to join? ", "True")
 				msg = recv(conn)
-				# join group
 				if msg.encode() not in groups:
 					print("invalid group name " + msg)
 					send(conn, "That is not a valid group", "False")
-					time.sleep(0.5)
 					send(conn, "break", "False")
 					break
 				room = groups.index(msg.encode())
 				participants[room].append(userpass[user][0])
 				print(participants)
-				time.sleep(0.5)
 				send(conn, "break", "False")
 			elif option == str(8):
 				print("Group message")
@@ -204,22 +200,23 @@ def clientThread(conn):
 				group = recv(conn)
 				send(conn, "What message would you like to send? ", "True")
 				msg = recv(conn)
-				# send msgs
+				room = groups.index(group.encode())
+				for person in participants[room]:
+					messages.append([person.decode(), msg])
+				print(messages)
+				send(conn, "break", "False")
 			elif option == str(9):
 				print("Leave group")
 				send(conn, "What group do you want to leave? ", "True")
 				group = recv(conn)
-				# leave group
 				if group.encode() not in groups:
 					print("invalid group name " + msg)
 					send(conn, "That is not a valid group", "false")
-					#time.sleep(0.5)
 					send(conn, "break", "False")
 					break
 				room = groups.index(msg.encode())
 				participants[room].remove(userpass[user][0])
 				print(participants)
-				#time.sleep(0.5)
 				send(conn, "break", "False")
 			else:
 				try :

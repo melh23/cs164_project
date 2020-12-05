@@ -74,8 +74,6 @@ def recv(s):
 				return stringToTuple(msg.decode())
 		except:
 			time.sleep(0.1)
-			# print("connection closed [recv]")
-			# break
 
 '''
 TODO: Part-1.1, 1.2: 
