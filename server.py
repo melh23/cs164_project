@@ -40,6 +40,7 @@ Start listening on socket
 '''
 s.listen(10)
 print("Socket now listening")
+ecn = False
 
 def recv(s):
 	while True:
@@ -55,15 +56,17 @@ def recv(s):
 def send(s, data, response):
 	msg = response + "<>" + data
 	s.setblocking(False)
+	s.sendall(msg.encode())
 	while True:
-		s.sendall(msg.encode())
 		try:
 			ack = s.recv(1024)
-			if ack:
+			if ack and ack[:2] == "ACK":
+				
 				s.setblocking(True)
 				return
 		except:
 			time.sleep(1)
+			s.sendall(msg.encode())
 
 '''
 Define variables:
@@ -116,6 +119,9 @@ def clientThread(conn):
 			except:
 				break
 			if option == str(1):
+				print("toggle ECN")
+				ecn = True
+			elif option == str(2):
 				print("user logout")
 				send(conn, "Logging you out!", "False")
 				try:
@@ -124,19 +130,20 @@ def clientThread(conn):
 					print("nalid Send falied")
 				print("user logged out")
 				break
-			elif option == str(2):
+			elif option == str(3):
 				print("change password")
 				send(conn, "What is your old password? ", "True")
 				msg = recv(conn)
 				if userpass[user][1].decode() != msg:
 					send(conn, "Invalid password. Aborting reset", "False")
+					send(conn, "break", "False")
 					break
 				send(conn, "What is your new password? ", "True")
 				msg = recv(conn)
 				userpass[user][1] = msg.encode()
 				send(conn, "Password updted", "False")
 				send(conn, "break", "False")
-			elif option == str(3):
+			elif option == str(4):
 				print("Get all messages")
 				name = userpass[user][0].decode()
 				msglist = ""
@@ -148,20 +155,21 @@ def clientThread(conn):
 						# messages.remove([name, msg[1]])
 				send(conn, msglist, "False")
 				send(conn, "break", "False")
-			elif option == str(4):
+			elif option == str(5):
 				print("Post a message")
 				send(conn, "Which user do you want to send to? ", "True")
 				sendto = recv(conn)
 				if not online[sendto]:
 					send(conn, "User not available", "False")
 					print("user not in client list")
+					send(conn, "break", "False")
 					break
 				send(conn, "What is your message? ", "True")
 				msg = recv(conn)
 				messages.append([sendto, msg])
 				print(messages)
 				send(conn, "break", "False")
-			elif option == str(5):
+			elif option == str(6):
 				print("Broadcast")
 				send(conn, "What is your message to broadcast? ", "True")
 				msg = recv(conn)
@@ -171,8 +179,8 @@ def clientThread(conn):
 				for people in online:
 					messages.append([people, msg])
 				print(messages)
-				send(conn, "break", "False")
-			elif option == str(6):
+				# send(conn, "break", "False")
+			elif option == str(7):
 				print("Print groups")
 				grouplist = ""
 				for g in groups:
@@ -181,7 +189,7 @@ def clientThread(conn):
 						grouplist += ", "
 				send(conn, grouplist, "False")
 				send(conn, "break", "False")
-			elif option == str(7):
+			elif option == str(8):
 				print("Join group")
 				send(conn, "Which group do you want to join? ", "True")
 				msg = recv(conn)
@@ -194,7 +202,7 @@ def clientThread(conn):
 				participants[room].append(userpass[user][0])
 				print(participants)
 				send(conn, "break", "False")
-			elif option == str(8):
+			elif option == str(9):
 				print("Group message")
 				send(conn, "What group would you like to send to? ", "True")
 				group = recv(conn)
@@ -205,13 +213,13 @@ def clientThread(conn):
 					messages.append([person.decode(), msg])
 				print(messages)
 				send(conn, "break", "False")
-			elif option == str(9):
+			elif option == str(10):
 				print("Leave group")
 				send(conn, "What group do you want to leave? ", "True")
 				group = recv(conn)
 				if group.encode() not in groups:
 					print("invalid group name " + msg)
-					send(conn, "That is not a valid group", "false")
+					send(conn, "That is not a valid group", "False")
 					send(conn, "break", "False")
 					break
 				room = groups.index(msg.encode())

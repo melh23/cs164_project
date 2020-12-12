@@ -70,7 +70,7 @@ def recv(s):
 				# print(msg.decode())
 				s.send("ACK<>".encode() + msg)
 				s.setblocking(True)
-				helpmeplz = s.recv(4069)
+				# helpmeplz = s.recv(4069)
 				return stringToTuple(msg.decode())
 		except:
 			time.sleep(0.1)
@@ -109,39 +109,42 @@ if reply.decode() == 'valid': # TODO: use the correct string to replace xxx here
 	while True :
 
 		# TODO: Part-1.4: User should be provided with a menu. Complete the missing options in the menu!
-		message = input("Choose an option (type the number): \n 1. Logout \n 2. Change Password \n 3. Get messages \n 4. Post a message \n 5. Broadcast \n 6. Print groups \n 7. Join a group \n 8. Group message \n 9. Leave group \n")
+		message = input("Choose an option (type the number): \n 1. Toggle ECN \n 2. Logout \n 3. Change Password \n 4. Get messages \n 5. Post a message \n 6. Broadcast \n 7. Print groups \n 8. Join a group \n 9. Group message \n 10. Leave group \n")
 		
 		try :
 			option = ""
 			if message == str(1):
+				print("Toggle ECN")
+				option = "1"
+			if message == str(2):
 				print("Logout")
-				s.send("1".encode())
+				s.send("2".encode())
 				s.recv(1024)
 				break
-			if message == str(2):
-				print("change password")
-				option = "2"
 			if message == str(3):
-				print("Get messages")
+				print("change password")
 				option = "3"
 			if message == str(4):
-				print("Post a message")
+				print("Get messages")
 				option = "4"
 			if message == str(5):
-				print("Broadcast")
+				print("Post a message")
 				option = "5"
 			if message == str(6):
-				print("Print groups")
+				print("Broadcast")
 				option = "6"
 			if message == str(7):
-				print("Join group")
+				print("Print groups")
 				option = "7"
 			if message == str(8):
-				print("Group message")
+				print("Join group")
 				option = "8"
 			if message == str(9):
-				print("Leave group")
+				print("Group message")
 				option = "9"
+			if message == str(10):
+				print("Leave group")
+				option = "10"
 			# Add other operations, e.g. change password
 			s.send(option.encode())
 			while True:

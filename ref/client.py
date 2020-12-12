@@ -27,8 +27,8 @@ except socket.error:
 	print("Failed to create socket")
 	sys.exit()
 
-host = 'localhost';
-port = 8888;
+host = 'localhost'
+port = 8888
 
 ack_seq = 0
 
