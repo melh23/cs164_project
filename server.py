@@ -60,8 +60,8 @@ def send(s, data, response):
 	while True:
 		try:
 			ack = s.recv(1024)
-			if ack and ack[:2] == "ACK":
-				
+			if ack and ack[:3] == b'ACK':
+				print("ACK")
 				s.setblocking(True)
 				return
 		except:

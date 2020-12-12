@@ -70,7 +70,7 @@ def recv(s):
 				# print(msg.decode())
 				s.send("ACK<>".encode() + msg)
 				s.setblocking(True)
-				# helpmeplz = s.recv(4069)
+				helpmeplz = s.recv(4069)
 				return stringToTuple(msg.decode())
 		except:
 			time.sleep(0.1)
